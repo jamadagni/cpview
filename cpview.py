@@ -51,9 +51,6 @@ def setComboItem(cb,s) :
 	for i in range(cb.count()) :
 		if cb.itemText(i) == s : cb.setCurrentIndex(i)
 
-def addComboItems(cb,*l) :
-	for i in l : cb.addItem(i)
-
 def makeTableModel(rows) :
 	tableModel = QStandardItemModel ( rows, 2 )
 	tableModel.setHeaderData ( 0, Qt.Horizontal, "Codepoint" )
@@ -65,8 +62,6 @@ class MainWindow(QWidget) :
 	def __init__(self) :
 		
 		QWidget.__init__(self)
-		
-		self.setObjectName("mainWindow")
 		self.setWindowTitle("cpview -- simple codepoint viewer")
 		
 		# shared symbols
@@ -115,7 +110,7 @@ class MainWindow(QWidget) :
 		# string format tab
 		
 		w = self.hexCaseComboBox = QComboBox()
-		addComboItems ( w, "ABCDEF", "abcdef" )
+		w.addItems ( [ "ABCDEF", "abcdef" ] )
 		
 		w = self.hexCaseLabel = QLabel("&Hex digits case")
 		w.setBuddy(self.hexCaseComboBox)
@@ -123,7 +118,7 @@ class MainWindow(QWidget) :
 		self.applyStringFormatButton = QPushButton("Appl&y")
 		
 		w = self.presetComboBox = QComboBox()
-		addComboItems ( w, "Simple", "Python", "HexNCR", "DecNCR", "Custom" )
+		w.addItems ( [ "Simple", "Python", "HexNCR", "DecNCR", "Custom" ] )
 		
 		w = self.presetLabel = QLabel("<b>&Presets</b>")
 		w.setBuddy(self.presetComboBox)
@@ -134,41 +129,41 @@ class MainWindow(QWidget) :
 		w.setBuddy(self.preserveASCIICheckBox)
 		
 		w = self.bmpPrefixComboBox = QComboBox()
-		addComboItems ( w, "U+", "\\u", "&#x", "&#", "(none)" )
+		w.addItems ( [ "U+", "\\u", "&#x", "&#", "(none)" ] )
 		w.setEditable(True)
 		
 		w = self.bmpPrefixLabel = QLabel("&BMP Prefix")
 		w.setBuddy(self.bmpPrefixComboBox)
 		
 		w = self.smpPrefixComboBox = QComboBox()
-		addComboItems ( w, "U+", "\\U", "&#x", "&#", "(none)" )
+		w.addItems ( [ "U+", "\\U", "&#x", "&#", "(none)" ] )
 		w.setEditable(True)
 		
 		w = self.smpPrefixLabel = QLabel("&SMP Prefix")
 		w.setBuddy(self.smpPrefixComboBox)
 		
 		w = self.suffixComboBox = QComboBox()
-		addComboItems ( w, "(none)", ";" )
+		w.addItems ( [ "(none)", ";" ] )
 		w.setEditable(True)
 		
 		w = self.suffixLabel = QLabel("Suffi&x")
 		w.setBuddy(self.suffixComboBox)
 		
 		w = self.numSystemComboBox = QComboBox()
-		addComboItems ( w, "Hex", "Dec" )
+		w.addItems ( [ "Hex", "Dec" ] )
 		
 		w = self.numSystemLabel = QLabel("&Number system")
 		w.setBuddy(self.numSystemComboBox)
 		
 		w = self.delimeterComboBox = QComboBox()
-		addComboItems ( w, "(space)", "(none)", "," )
+		w.addItems ( [ "(space)", "(none)", "," ] )
 		w.setEditable(True)
 		
 		w = self.delimeterLabel = QLabel("&Delimeter")
 		w.setBuddy(self.delimeterComboBox)
 		
 		w = self.smpCodeLengthComboBox = QComboBox()
-		addComboItems ( w, "6", "8" )
+		w.addItems ( [ "6", "8" ] )
 		
 		w = self.smpCodeLengthLabel = QLabel("SMP Hex &Length")
 		w.setBuddy(self.smpCodeLengthComboBox)
