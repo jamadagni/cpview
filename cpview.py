@@ -48,14 +48,12 @@ def fixSurrogatePresence(s) :
 
 def setComboItem(cb,s) :
 	if cb.currentText() == s : return
-	for i in range(cb.count()) :
-		if cb.itemText(i) == s : cb.setCurrentIndex(i)
+	cb.setCurrentIndex(cb.findText(s))
 
-def makeTableModel(rows) :
-	tableModel = QStandardItemModel ( rows, 2 )
-	tableModel.setHeaderData ( 0, Qt.Horizontal, "Codepoint" )
-	tableModel.setHeaderData ( 1, Qt.Horizontal, "Character name" )
-	return tableModel
+class ReadOnlyTableItem(QTableWidgetItem):
+	def __init__(self, str):
+		QTableWidgetItem.__init__(self, str)
+		self.setFlags(self.flags() & ~ Qt.ItemIsEditable)
 
 class MainWindow(QWidget) :
 	
@@ -66,7 +64,6 @@ class MainWindow(QWidget) :
 		
 		# shared symbols
 		
-		self.currentTableModel = makeTableModel(0) # shared between doTableOutput and copyTableToClipboard
 		self.textProcessedForSurrogates = "" # shared between doTableOutput and doStringOutput
 		
 		# top widgets
@@ -80,14 +77,15 @@ class MainWindow(QWidget) :
 		
 		# output table tab
 		
-		w = self.outputTableView = QTableView()
-		w.setModel(self.currentTableModel)
+		w = self.outputTableWidget = QTableWidget()
+		w.setColumnCount(2)
+		w.setHorizontalHeaderLabels ( [ "Codepoint", "Character Name" ] )
 		w.horizontalHeader().setStretchLastSection(True)
 		
 		self.outputTableCopyPushButton = QPushButton("Cop&y all to clipboard")
 		
 		l = self.outputTableLayout = QVBoxLayout()
-		l.addWidget(self.outputTableView)
+		l.addWidget(self.outputTableWidget)
 		l.addWidget(self.outputTableCopyPushButton)
 		
 		w = self.outputTableTab = QWidget()
@@ -225,16 +223,18 @@ class MainWindow(QWidget) :
 		
 	def doTableOutput(self) :
 		text = self.textProcessedForSurrogates = fixSurrogatePresence(self.inputTextBox.toPlainText())
-		m = self.currentTableModel = makeTableModel(len(text))
-		for i in range(len(text)) :
-			m.setItem ( i, 0, QStandardItem ( "U+" + code(text[i]).upper() ) )
-			m.setItem ( i, 1, QStandardItem ( unicodedata.name ( text[i], "UNKNOWN" ) ) )
-		self.outputTableView.setModel(m)
+		rows = len(text)
+		w = self.outputTableWidget
+		w.clearContents()
+		w.setRowCount(rows)
+		for i in range(rows) :
+			w.setItem ( i, 0, ReadOnlyTableItem ( "U+" + code(text[i]).upper() ) )
+			w.setItem ( i, 1, ReadOnlyTableItem ( unicodedata.name ( text[i], "UNKNOWN" ) ) )
 	
 	def copyTableToClipboard(self) :
-		m = self.currentTableModel
+		w = self.outputTableWidget
 		out = ""
-		for i in range(m.rowCount()) : out += m.item(i,0).text() + "\t" + m.item(i,1).text() + "\n"
+		for i in range(w.rowCount()) : out += w.item(i,0).text() + "\t" + w.item(i,1).text() + "\n"
 		QApplication.clipboard().setText(out)
 	
 	def doStringOutput(self) :
