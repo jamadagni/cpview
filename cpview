@@ -26,12 +26,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+dataSourceIsUninameslist = False
 try:
 	import uninameslist
 	dataSourceIsUninameslist = True
 except ImportError:
-	import unicodedata
-	dataSourceIsUninameslist = False
+	try:
+		import unicodedata2
+	except ImportError:
+		import unicodedata
 
 def name(char):
 	n = uninameslist.name2(char) if dataSourceIsUninameslist else unicodedata.name(char, "")
@@ -40,7 +43,7 @@ def name(char):
 def code(char, smpLen = 6):
 	val = ord(char)
 	if val < 0xFFFF: return "{:04x}".format(val)
-	return("{:06x}" if smpLen == 6 else "{:08x}").format(val)
+	return ("{:06x}" if smpLen == 6 else "{:08x}").format(val)
 
 def joinSurrogates(match):
 	SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00
@@ -65,116 +68,116 @@ class ReadOnlyTableItem(QTableWidgetItem):
 		self.setFlags(self.flags() & ~ Qt.ItemIsEditable)
 
 class MainWindow(QWidget):
-	
+
 	def __init__(self):
-		
+
 		QWidget.__init__(self)
 		self.setWindowTitle("cpview -- simple codepoint viewer")
-		
+
 		# shared symbols
-		
+
 		self.textProcessedForSurrogates = "" # shared between doTableOutput and doStringOutput
-		
+
 		# top widgets
-		
+
 		self.inputTextBox = QPlainTextEdit()
-		
+
 		w = self.inputLabel = QLabel("&Input text")
 		w.setBuddy(self.inputTextBox)
-		
+
 		self.analyseButton = QPushButton("&Analyse")
-		
+
 		# output table tab
-		
+
 		w = self.outputTableWidget = QTableWidget()
 		w.setColumnCount(3)
 		w.setHorizontalHeaderLabels(["Character", "Codepoint", "Character Name"])
 		w.horizontalHeader().setStretchLastSection(True)
-		
+
 		self.outputTableCopyPushButton = QPushButton("Cop&y all to clipboard")
-		
+
 		l = self.outputTableLayout = QVBoxLayout()
 		l.addWidget(self.outputTableWidget)
 		l.addWidget(self.outputTableCopyPushButton)
-		
+
 		w = self.outputTableTab = QWidget()
 		w.setLayout(l)
-		
+
 		# output string tab
-		
+
 		w = self.outputTextBox = QPlainTextEdit()
 		w.setReadOnly(True)
-		
+
 		self.outputTextCopyPushButton = QPushButton("Cop&y all to clipboard")
-		
+
 		l = self.outputStringLayout = QVBoxLayout()
 		l.addWidget(self.outputTextBox)
 		l.addWidget(self.outputTextCopyPushButton)
-		
+
 		w = self.outputStringTab = QWidget()
 		w.setLayout(l)
-		
+
 		# string format tab
-		
+
 		w = self.hexCaseComboBox = QComboBox()
 		w.addItems(["ABCDEF", "abcdef"])
-		
+
 		w = self.hexCaseLabel = QLabel("&Hex digits case")
 		w.setBuddy(self.hexCaseComboBox)
-		
+
 		self.applyStringFormatButton = QPushButton("Appl&y")
-		
+
 		w = self.presetComboBox = QComboBox()
 		w.addItems(["Simple", "Python", "HexNCR", "DecNCR", "Custom"])
-		
+
 		w = self.presetLabel = QLabel("<b>&Presets</b>")
 		w.setBuddy(self.presetComboBox)
-		
+
 		self.preserveASCIICheckBox = QCheckBox()
 
 		w = self.preserveASCIILabel = QLabel("Preser&ve ASCII")
 		w.setBuddy(self.preserveASCIICheckBox)
-		
+
 		w = self.bmpPrefixComboBox = QComboBox()
 		w.addItems(["U+", "\\u", "&#x", "&#", "(none)"])
 		w.setEditable(True)
-		
+
 		w = self.bmpPrefixLabel = QLabel("&BMP Prefix")
 		w.setBuddy(self.bmpPrefixComboBox)
-		
+
 		w = self.smpPrefixComboBox = QComboBox()
 		w.addItems(["U+", "\\U", "&#x", "&#", "(none)"])
 		w.setEditable(True)
-		
+
 		w = self.smpPrefixLabel = QLabel("&SMP Prefix")
 		w.setBuddy(self.smpPrefixComboBox)
-		
+
 		w = self.suffixComboBox = QComboBox()
 		w.addItems(["(none)", ";"])
 		w.setEditable(True)
-		
+
 		w = self.suffixLabel = QLabel("Suffi&x")
 		w.setBuddy(self.suffixComboBox)
-		
+
 		w = self.numSystemComboBox = QComboBox()
 		w.addItems(["Hex", "Dec"])
-		
+
 		w = self.numSystemLabel = QLabel("&Number system")
 		w.setBuddy(self.numSystemComboBox)
-		
+
 		w = self.delimeterComboBox = QComboBox()
 		w.addItems(["(space)", "(none)", ","])
 		w.setEditable(True)
-		
+
 		w = self.delimeterLabel = QLabel("&Delimeter")
 		w.setBuddy(self.delimeterComboBox)
-		
+
 		w = self.smpCodeLengthComboBox = QComboBox()
 		w.addItems(["6", "8"])
-		
+
 		w = self.smpCodeLengthLabel = QLabel("SMP Hex &Length")
 		w.setBuddy(self.smpCodeLengthComboBox)
-		
+
 		l = self.stringSettingsGrid = QGridLayout()
 		l.setColumnMinimumWidth(2, 20) # empty separator
 		grid = ((self.hexCaseLabel  , self.hexCaseComboBox  , None, None                   , None                      ),
@@ -186,41 +189,41 @@ class MainWindow(QWidget):
 			for c in range(5):
 				if grid[r][c] is not None: l.addWidget(grid[r][c], r, c)
 		l.addWidget(self.applyStringFormatButton, 0, 3, 1, 2)
-		
+
 		w = self.stringFormatTab = QWidget()
 		w.setLayout(l)
-		
+
 		# tabwidget
-		
+
 		w = self.tabWidget = QTabWidget()
 		w.addTab(self.outputTableTab, "As a &table")
 		w.addTab(self.outputStringTab, "As a st&ring")
 		w.addTab(self.stringFormatTab, "String &format")
 		# NOTE: if you change the order of tabs here, update applyStringFormatButton.clicked's lambda slot below
-		
+
 		# main layout
-		
+
 		l = self.mainLayout = QVBoxLayout()
 		l.addWidget(self.inputLabel)
 		l.addWidget(self.inputTextBox)
 		l.addWidget(self.analyseButton)
 		l.addWidget(self.tabWidget)
 		self.setLayout(l)
-		
+
 		# signal/slot connections
-		
+
 		self.analyseButton.clicked.connect(self.doTableOutput) # this slot should be connected before next
 		self.analyseButton.clicked.connect(self.doStringOutput)
-		
+
 		self.outputTableCopyPushButton.clicked.connect(self.copyTableToClipboard)
 		self.outputTextCopyPushButton.clicked.connect(lambda: QApplication.clipboard().setText(self.outputTextBox.toPlainText()))
-		
+
 		self.applyStringFormatButton.clicked.connect(self.doStringOutput)
 		self.applyStringFormatButton.clicked.connect(lambda: self.tabWidget.setCurrentIndex(1))
 			# NOTE: the above index should be updated if you reorder the tabs in the tabwidget
-		
+
 		self.presetComboBox.currentIndexChanged[str].connect(self.presetChanged)
-		
+
 		for cbn in "bmpPrefix", "smpPrefix", "suffix", "numSystem", "delimeter", "smpCodeLength":
 			self.__dict__[cbn + "ComboBox"].currentIndexChanged[int].connect(
 				lambda: setComboItem(self.presetComboBox, "Custom"))
@@ -229,7 +232,7 @@ class MainWindow(QWidget):
 			lambda checked: setComboItem(self.delimeterComboBox, "(none)") if checked else None)
 		self.delimeterComboBox.currentIndexChanged[str].connect(
 			lambda delimeter: None if delimeter in("", "(none)") else self.preserveASCIICheckBox.setChecked(False))
-		
+
 	def doTableOutput(self):
 		text = self.textProcessedForSurrogates = fixSurrogatePresence(self.inputTextBox.toPlainText())
 		rows = len(text)
@@ -240,15 +243,15 @@ class MainWindow(QWidget):
 			w.setItem(i, 0, ReadOnlyTableItem("‘{}’".format(text[i])))
 			w.setItem(i, 1, ReadOnlyTableItem("U+" + code(text[i]).upper()))
 			w.setItem(i, 2, ReadOnlyTableItem(name(text[i])))
-	
+
 	def copyTableToClipboard(self):
 		w = self.outputTableWidget
 		out = ""
 		for i in range(w.rowCount()): out += w.item(i, 0).text() + "\t" + w.item(i, 1).text() + "\t" + w.item(i, 2).text() + "\n"
 		QApplication.clipboard().setText(out)
-	
+
 	def doStringOutput(self):
-		
+
 		capitalizeHex = self.hexCaseComboBox.currentText() == "ABCDEF"
 		preserveASCII = self.preserveASCIICheckBox.isChecked()
 		bmpPrefix = self.bmpPrefixComboBox.currentText()
@@ -257,11 +260,11 @@ class MainWindow(QWidget):
 		numSystemDecimal = self.numSystemComboBox.currentText() == "Dec"
 		delimeter = self.delimeterComboBox.currentText()
 		smpCodeLength = int(self.smpCodeLengthComboBox.currentText())
-		
+
 		def checkNone(s): return "" if s == "(none)" else s
 		bmpPrefix, smpPrefix, suffix, delimeter = map(checkNone, (bmpPrefix, smpPrefix, suffix, delimeter))
 		if delimeter == "(space)": delimeter = " "
-		
+
 		out = ""
 		for char in self.textProcessedForSurrogates: # relies on doTableOutput being executed before this
 			if preserveASCII and 0x0019 < ord(char) < 0x007f:
@@ -277,7 +280,7 @@ class MainWindow(QWidget):
 				out += c
 				out += suffix
 		self.outputTextBox.setPlainText(out)
-	
+
 	presetTargets =       ("bmpPrefix", "smpPrefix", "suffix", "numSystem", "delimeter", "smpCodeLength")
 	presetMap = {"Simple":(       "U+",        "U+", "(none)",       "Hex",   "(space)",             "6"),
 	             "Python":(      "\\u",       "\\U", "(none)",       "Hex",    "(none)",             "8"),
@@ -289,7 +292,7 @@ class MainWindow(QWidget):
 		for i in range(len(currPreset)):
 			setComboItem(self.__dict__[MainWindow.presetTargets[i] + "ComboBox"], currPreset[i])
 		setComboItem(self.presetComboBox, newPresetName) # needed since above actions may reset this to Custom
-	
+
 app = QApplication([])
 mainWindow = MainWindow()
 mainWindow.show()
