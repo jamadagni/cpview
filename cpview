@@ -22,8 +22,9 @@
 # Contributors:
 # Andrew Cunningham <acunningham at slv.vic.gov.au>: code for NCR forms and preserve ASCII
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 try:
 	import uninameslist
