@@ -26,19 +26,22 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-dataSourceIsUninameslist = False
 try:
 	import uninameslist
-	dataSourceIsUninameslist = True
+	getName = uninameslist.name2
 except ImportError:
 	try:
 		import unicodedata2
+		getName = unicodedata2.name
 	except ImportError:
 		import unicodedata
+		getName = unicodedata.name
 
 def name(char):
-	n = uninameslist.name2(char) if dataSourceIsUninameslist else unicodedata.name(char, "")
-	return "<unknown>" if not n else n
+	try:
+		return getName(char)
+	except ValueError:
+		return "<unknown>"
 
 def code(char, smpLen = 6):
 	val = ord(char)
